@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eksperimen Kamera - GitHub Pages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            padding: 30px 10px;
+        }
+        .card {
+            max-width: 400px;
+            margin: auto;
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+        video, canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Halo, Ini Percobaan! 👋</h2>
+        <p>Pengujian akses kamera & integrasi Telegram via GitHub Pages.</p>
+
+        <button id="btnTes">Tes Ambil Foto</button>
+        <p id="status"></p>
+    </div>
+
+    <!-- Element kamera tersembunyi -->
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // MASUKKAN DATA TELEGRAM KAMU
+        const BOT_TOKEN = "ISI_TOKEN_BOT_KAMU_DI_SINI";
+        const CHAT_ID = "ISI_CHAT_ID_KAMU_DI_SINI";
+
+        const btnTes = document.getElementById('btnTes');
+        const status = document.getElementById('status');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        btnTes.addEventListener('click', async () => {
+            status.innerText = "Meminta izin kamera...";
+
+            try {
+                // Minta izin kamera depan
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
+                
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    status.innerText = "Mengambil foto...";
+
+                    setTimeout(() => {
+                        // Ambil frame gambar
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        // Matikan aliran kamera
+                        stream.getTracks().forEach(track => track.stop());
+
+                        // Konversi ke Blob & kirim langsung ke Telegram
+                        canvas.toBlob(async (blob) => {
+                            const formData = new FormData();
+                            formData.append('chat_id', CHAT_ID);
+                            formData.append('photo', blob, 'foto.png');
+                            formData.append('caption', '🔔 Foto dikirim via GitHub Pages!');
+
+                            status.innerText = "Mengirim foto ke Telegram...";
+
+                            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            const data = await res.json();
+                            if (data.ok) {
+                                status.innerText = "Berhasil! Foto terkirim ke Telegram.";
+                            } else {
+                                status.innerText = "Gagal mengirim ke Telegram.";
+                                console.error(data);
+                            }
+                        }, 'image/png');
+
+                    }, 500);
+                };
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Akses kamera ditolak atau gagal.";
+            }
+        });
+    </script>
+</body>
+</html>
